@@ -2,58 +2,48 @@ import React, { useRef, useState } from "react";
 
 export default function App() {
   const [image, setImage] = useState(null);
-  const [activeTool, setActiveTool] = useState("Original");
+  const [fileName, setFileName] = useState("pixora-image");
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
-  const [blur, setBlur] = useState(0);
+  const [grayscale, setGrayscale] = useState(0);
   const [rotation, setRotation] = useState(0);
-  const [scale, setScale] = useState(1);
+  const [flip, setFlip] = useState(false);
+  const [zoom, setZoom] = useState(100);
 
   const fileInput = useRef(null);
+  const canvasRef = useRef(null);
 
   const handleImage = (e) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
     const url = URL.createObjectURL(file);
+
     setImage(url);
+    setFileName(file.name.split(".")[0]);
 
-    setActiveTool("Original");
+    resetEditing();
+  };
+
+  const resetEditing = () => {
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
-    setBlur(0);
+    setGrayscale(0);
     setRotation(0);
-    setScale(1);
+    setFlip(false);
+    setZoom(100);
   };
 
-  const resetImage = () => {
-    setActiveTool("Original");
-    setBrightness(100);
-    setContrast(100);
-    setSaturation(100);
-    setBlur(0);
-    setRotation(0);
-    setScale(1);
-  };
-
-  const enhance = () => {
-    setActiveTool("AI Enhance");
-    setBrightness(108);
-    setContrast(115);
-    setSaturation(110);
-    setBlur(0);
-  };
-
-  const grayscale = () => {
-    setActiveTool("Grayscale");
-    setSaturation(0);
-  };
-
-  const sepia = () => {
-    setActiveTool("Sepia");
+  const rotateImage = () => {
+    setRotation((prev) => prev + 90);
   };
 
   const downloadImage = () => {
@@ -65,95 +55,65 @@ export default function App() {
     const img = new Image();
 
     img.onload = () => {
-      const canvas = document.createElement("canvas");
+      const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
 
-      canvas.width = img.width;
-      canvas.height = img.height;
+      const angle = rotation % 360;
+
+      if (angle === 90 || angle === 270) {
+        canvas.width = img.height;
+        canvas.height = img.width;
+      } else {
+        canvas.width = img.width;
+        canvas.height = img.height;
+      }
+
+      ctx.save();
+
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((angle * Math.PI) / 180);
+
+      if (flip) {
+        ctx.scale(-1, 1);
+      }
 
       ctx.filter = `
         brightness(${brightness}%)
         contrast(${contrast}%)
         saturate(${saturation}%)
-        blur(${blur}px)
+        grayscale(${grayscale}%)
       `;
-
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-
-      const drawWidth = canvas.width * scale;
-      const drawHeight = canvas.height * scale;
 
       ctx.drawImage(
         img,
-        -drawWidth / 2,
-        -drawHeight / 2,
-        drawWidth,
-        drawHeight
+        -img.width / 2,
+        -img.height / 2,
+        img.width,
+        img.height
       );
 
+      ctx.restore();
+
       const link = document.createElement("a");
-      link.download = "pixora-ai-edited.png";
+
+      link.download = `${fileName}-pixora.png`;
       link.href = canvas.toDataURL("image/png");
+
       link.click();
     };
 
     img.src = image;
   };
 
-  const tools = [
-    {
-      name: "AI Enhance",
-      icon: "✨",
-      action: enhance,
-    },
-    {
-      name: "Background Remover",
-      icon: "🪄",
-      action: () => alert("AI Background Remover API will be connected next."),
-    },
-    {
-      name: "Object Remover",
-      icon: "🗑️",
-      action: () => alert("AI Object Remover API will be connected next."),
-    },
-    {
-      name: "AI Upscaler",
-      icon: "🔍",
-      action: () => {
-        setActiveTool("AI Upscaler");
-        setScale(1.5);
-      },
-    },
-    {
-      name: "Background Changer",
-      icon: "🌈",
-      action: () => alert("AI Background Changer API will be connected next."),
-    },
-    {
-      name: "Face Retouch",
-      icon: "😊",
-      action: () => alert("AI Face Retouch API will be connected next."),
-    },
-    {
-      name: "Grayscale",
-      icon: "⚫",
-      action: grayscale,
-    },
-    {
-      name: "Sepia",
-      icon: "🟤",
-      action: sepia,
-    },
-  ];
+  const toolClick = (tool) => {
+    if (!image) {
+      alert("पहले image upload करें।");
+      return;
+    }
 
-  const imageStyle = {
-    filter:
-      activeTool === "Sepia"
-        ? `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px) sepia(80%)`
-        : `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) blur(${blur}px)`,
-
-    transform: `rotate(${rotation}deg) scale(${scale})`,
+    alert(
+      `${tool} selected!\n\nAI API जोड़ने के बाद यह tool वास्तव में AI processing करेगा।`
+    );
   };
 
   return (
@@ -163,14 +123,13 @@ export default function App() {
       <header className="header">
 
         <div className="logo">
-          <span className="logoIcon">✦</span>
-          Pixora <b>AI</b>
+          Pixora <span>AI</span>
         </div>
 
         <nav>
           <a href="#home">Home</a>
-          <a href="#editor">AI Editor</a>
           <a href="#tools">AI Tools</a>
+          <a href="#editor">Editor</a>
           <a href="#pricing">Pricing</a>
         </nav>
 
@@ -181,113 +140,91 @@ export default function App() {
 
       </header>
 
-      {/* HERO */}
       <main id="home">
 
+        {/* HERO */}
         <section className="hero">
 
-          <div className="heroContent">
+          <h1>
+            AI Image Editing
+            <br />
+            <span>Made Simple</span>
+          </h1>
 
-            <div className="badge">
-              ✨ NEXT-GENERATION AI IMAGE EDITOR
+          <p>
+            Edit, enhance and transform your images with powerful
+            AI-powered tools.
+          </p>
+
+          {/* UPLOAD */}
+          <label className="uploadBox">
+
+            <div className="uploadIcon">
+              📸
             </div>
 
-            <h1>
-              Create Amazing Images
-              <span> With AI</span>
-            </h1>
+            <h2>
+              {image ? "Image Uploaded ✓" : "Upload Your Image"}
+            </h2>
 
             <p>
-              Edit, enhance, transform and create stunning images
-              with powerful artificial intelligence.
+              Drag & drop your image here
+              <br />
+              or click to browse
             </p>
 
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              onChange={handleImage}
+              hidden
+            />
+
             <button
-              className="heroButton"
+              type="button"
               onClick={() => fileInput.current?.click()}
             >
-              🚀 Start Editing
+              📤 Choose Image
             </button>
 
-          </div>
+            <span>
+              JPG • PNG • WEBP
+            </span>
+
+          </label>
 
         </section>
 
         {/* EDITOR */}
-        <section className="editorSection" id="editor">
+        {image && (
+          <section className="editorSection" id="editor">
 
-          <div className="sectionTitle">
-            <span>AI POWERED</span>
-            <h2>Professional Image Editor</h2>
-            <p>Upload your image and start creating.</p>
-          </div>
-
-          {!image ? (
-
-            <label className="uploadBox">
-
-              <div className="uploadIcon">☁️</div>
-
-              <h2>Upload Your Image</h2>
-
-              <p>
-                Drag & drop your image here
-              </p>
-
-              <button
-                type="button"
-                onClick={() => fileInput.current?.click()}
-              >
-                Choose Image
-              </button>
-
-              <small>
-                JPG • PNG • WEBP
-              </small>
-
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-              />
-
-            </label>
-
-          ) : (
+            <h2>🖌️ Image Editor</h2>
 
             <div className="editor">
 
-              {/* TOOLBAR */}
-              <div className="editorToolbar">
+              {/* IMAGE */}
+              <div className="preview">
 
-                <button onClick={resetImage}>
-                  ↩ Reset
-                </button>
-
-                <button onClick={() => setRotation(rotation - 90)}>
-                  ↶ Rotate
-                </button>
-
-                <button onClick={() => setRotation(rotation + 90)}>
-                  ↷ Rotate
-                </button>
-
-                <button onClick={downloadImage} className="download">
-                  ⬇ Download
-                </button>
-
-              </div>
-
-              {/* CANVAS */}
-              <div className="canvasArea">
-
-                <div className="imageCanvas">
+                <div className="previewImage">
 
                   <img
                     src={image}
-                    alt="Uploaded"
-                    style={imageStyle}
+                    alt="Pixora preview"
+                    style={{
+                      filter: `
+                        brightness(${brightness}%)
+                        contrast(${contrast}%)
+                        saturate(${saturation}%)
+                        grayscale(${grayscale}%)
+                      `,
+                      transform: `
+                        rotate(${rotation}deg)
+                        scaleX(${flip ? -1 : 1})
+                        scale(${zoom / 100})
+                      `
+                    }}
                   />
 
                 </div>
@@ -297,195 +234,232 @@ export default function App() {
               {/* CONTROLS */}
               <div className="controls">
 
-                <h3>🎛 Adjust Image</h3>
+                <h3>Adjust Image</h3>
 
                 <label>
-                  Brightness
+                  ☀️ Brightness
                   <input
                     type="range"
-                    min="50"
-                    max="150"
+                    min="0"
+                    max="200"
                     value={brightness}
                     onChange={(e) =>
-                      setBrightness(e.target.value)
+                      setBrightness(Number(e.target.value))
                     }
                   />
+                  <span>{brightness}%</span>
                 </label>
 
                 <label>
-                  Contrast
+                  🌗 Contrast
                   <input
                     type="range"
-                    min="50"
-                    max="150"
+                    min="0"
+                    max="200"
                     value={contrast}
                     onChange={(e) =>
-                      setContrast(e.target.value)
+                      setContrast(Number(e.target.value))
                     }
                   />
+                  <span>{contrast}%</span>
                 </label>
 
                 <label>
-                  Saturation
+                  🎨 Saturation
                   <input
                     type="range"
                     min="0"
                     max="200"
                     value={saturation}
                     onChange={(e) =>
-                      setSaturation(e.target.value)
+                      setSaturation(Number(e.target.value))
                     }
                   />
+                  <span>{saturation}%</span>
                 </label>
 
                 <label>
-                  Blur
+                  ⚫ Grayscale
                   <input
                     type="range"
                     min="0"
-                    max="10"
-                    value={blur}
+                    max="100"
+                    value={grayscale}
                     onChange={(e) =>
-                      setBlur(e.target.value)
+                      setGrayscale(Number(e.target.value))
                     }
                   />
+                  <span>{grayscale}%</span>
                 </label>
 
-              </div>
+                <label>
+                  🔎 Zoom
+                  <input
+                    type="range"
+                    min="50"
+                    max="200"
+                    value={zoom}
+                    onChange={(e) =>
+                      setZoom(Number(e.target.value))
+                    }
+                  />
+                  <span>{zoom}%</span>
+                </label>
 
-              {/* AI TOOLS */}
-              <div className="editorTools">
+                <div className="editButtons">
 
-                <h3>✨ AI Tools</h3>
+                  <button onClick={rotateImage}>
+                    🔄 Rotate
+                  </button>
 
-                <div className="miniTools">
+                  <button onClick={() => setFlip(!flip)}>
+                    🪞 Flip
+                  </button>
 
-                  {tools.map((tool) => (
-
-                    <button
-                      key={tool.name}
-                      onClick={tool.action}
-                    >
-                      <span>{tool.icon}</span>
-                      {tool.name}
-                    </button>
-
-                  ))}
+                  <button onClick={resetEditing}>
+                    ↩️ Reset
+                  </button>
 
                 </div>
 
-              </div>
-
-            </div>
-
-          )}
-
-        </section>
-
-        {/* AI TOOLS */}
-        <section className="toolsSection" id="tools">
-
-          <div className="sectionTitle">
-
-            <span>POWERFUL AI</span>
-
-            <h2>Everything You Need</h2>
-
-            <p>
-              Professional AI image editing tools in one place.
-            </p>
-
-          </div>
-
-          <div className="toolsGrid">
-
-            {tools.map((tool) => (
-
-              <div className="toolCard" key={tool.name}>
-
-                <div className="toolIcon">
-                  {tool.icon}
-                </div>
-
-                <h3>{tool.name}</h3>
-
-                <p>
-                  Powerful AI technology to transform
-                  your images instantly.
-                </p>
-
-                <button onClick={() => {
-
-                  if (!image) {
-                    alert("Please upload an image first.");
-                    return;
-                  }
-
-                  tool.action();
-
-                }}>
-                  Try Now →
+                <button
+                  className="downloadButton"
+                  onClick={downloadImage}
+                >
+                  💾 Download Image
                 </button>
 
               </div>
 
-            ))}
+            </div>
+
+          </section>
+        )}
+
+        {/* AI TOOLS */}
+        <section className="toolsSection" id="tools">
+
+          <h2>⚡ Powerful AI Tools</h2>
+
+          <p className="sectionSubtitle">
+            Transform your images with next-generation AI.
+          </p>
+
+          <div className="toolsGrid">
+
+            <div className="toolCard">
+              <h3>🪄 Background Remover</h3>
+              <p>
+                Automatically remove image backgrounds.
+              </p>
+              <button onClick={() => toolClick("Background Remover")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>✨ AI Generative Fill</h3>
+              <p>
+                Add or replace objects using AI.
+              </p>
+              <button onClick={() => toolClick("Generative Fill")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>🗑️ Object Remover</h3>
+              <p>
+                Remove unwanted people and objects.
+              </p>
+              <button onClick={() => toolClick("Object Remover")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>🔍 AI Upscaler</h3>
+              <p>
+                Increase image resolution with AI.
+              </p>
+              <button onClick={() => toolClick("AI Upscaler")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>🌈 Image Enhancer</h3>
+              <p>
+                Improve lighting, colors and details.
+              </p>
+              <button onClick={() => toolClick("Image Enhancer")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>🎭 Background Changer</h3>
+              <p>
+                Change your image background with AI.
+              </p>
+              <button onClick={() => toolClick("Background Changer")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>👤 AI Portrait</h3>
+              <p>
+                Enhance portraits and faces.
+              </p>
+              <button onClick={() => toolClick("AI Portrait")}>
+                Try Now
+              </button>
+            </div>
+
+            <div className="toolCard">
+              <h3>✏️ AI Image Editor</h3>
+              <p>
+                Edit your image using natural language.
+              </p>
+              <button onClick={() => toolClick("AI Image Editor")}>
+                Try Now
+              </button>
+            </div>
 
           </div>
 
         </section>
 
-        {/* PRICING */}
-        <section className="pricing" id="pricing">
+        {/* FEATURES */}
+        <section className="features">
 
-          <div className="sectionTitle">
+          <h2>Why Choose Pixora AI?</h2>
 
-            <span>SIMPLE PRICING</span>
+          <div className="featureGrid">
 
-            <h2>Choose Your Plan</h2>
-
-          </div>
-
-          <div className="pricingGrid">
-
-            <div className="priceCard">
-
-              <h3>Free</h3>
-
-              <div className="price">
-                ₹0
-                <small>/month</small>
-              </div>
-
-              <p>✓ Basic image editing</p>
-              <p>✓ Limited AI tools</p>
-              <p>✓ Standard download</p>
-
-              <button>Start Free</button>
-
+            <div>
+              <span>⚡</span>
+              <h3>Fast</h3>
+              <p>Process your images quickly.</p>
             </div>
 
-            <div className="priceCard premium">
+            <div>
+              <span>🤖</span>
+              <h3>AI Powered</h3>
+              <p>Advanced AI editing technology.</p>
+            </div>
 
-              <div className="popular">
-                MOST POPULAR
-              </div>
+            <div>
+              <span>🔒</span>
+              <h3>Secure</h3>
+              <p>Your images stay protected.</p>
+            </div>
 
-              <h3>Pro</h3>
-
-              <div className="price">
-                ₹299
-                <small>/month</small>
-              </div>
-
-              <p>✓ Unlimited editing</p>
-              <p>✓ AI Background Removal</p>
-              <p>✓ AI Object Removal</p>
-              <p>✓ HD Upscaling</p>
-              <p>✓ Premium downloads</p>
-
-              <button>Upgrade Pro</button>
-
+            <div>
+              <span>📱</span>
+              <h3>Mobile Friendly</h3>
+              <p>Works on phone, tablet and desktop.</p>
             </div>
 
           </div>
@@ -498,38 +472,38 @@ export default function App() {
       <footer>
 
         <div>
-          <h2>Pixora AI</h2>
-
+          <h3>Pixora AI</h3>
           <p>
             Next-generation AI image editing platform.
           </p>
-
-          <p>
-            © 2026 Pixora AI. All rights reserved.
-          </p>
-
         </div>
 
         <div>
-          <h3>Product</h3>
-          <p>AI Editor</p>
+          <h4>Product</h4>
           <p>AI Tools</p>
+          <p>Image Editor</p>
           <p>Pricing</p>
         </div>
 
         <div>
-          <h3>Company</h3>
+          <h4>Company</h4>
           <p>About</p>
           <p>Contact</p>
         </div>
 
         <div>
-          <h3>Legal</h3>
+          <h4>Legal</h4>
           <p>Privacy</p>
           <p>Terms</p>
         </div>
 
       </footer>
+
+      {/* HIDDEN CANVAS FOR DOWNLOAD */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: "none" }}
+      />
 
     </div>
   );
