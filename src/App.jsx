@@ -1,149 +1,366 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 export default function App() {
   const [image, setImage] = useState(null);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [blur, setBlur] = useState(0);
+  const [rotation, setRotation] = useState(0);
+  const [grayscale, setGrayscale] = useState(0);
+  const fileInput = useRef(null);
 
   const handleImage = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
 
-    if (file) {
-      setImage(URL.createObjectURL(file));
-    }
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setImage(url);
+  };
+
+  const resetEditor = () => {
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
+    setBlur(0);
+    setRotation(0);
+    setGrayscale(0);
+  };
+
+  const downloadImage = () => {
+    if (!image) return;
+
+    const img = new Image();
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.filter = `
+        brightness(${brightness}%)
+        contrast(${contrast}%)
+        saturate(${saturation}%)
+        blur(${blur}px)
+        grayscale(${grayscale}%)
+      `;
+
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+
+      ctx.drawImage(
+        img,
+        -canvas.width / 2,
+        -canvas.height / 2,
+        canvas.width,
+        canvas.height
+      );
+
+      const link = document.createElement("a");
+      link.download = "pixora-ai-edited.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    };
+
+    img.src = image;
+  };
+
+  const filterStyle = {
+    filter: `
+      brightness(${brightness}%)
+      contrast(${contrast}%)
+      saturate(${saturation}%)
+      blur(${blur}px)
+      grayscale(${grayscale}%)
+    `,
+    transform: `rotate(${rotation}deg)`,
   };
 
   return (
     <div className="app">
-
       <header className="header">
-        <div className="logo">Pixora AI</div>
+        <div className="logo">
+          <span>✦</span> Pixora AI
+        </div>
 
-        <nav>
-          <a href="#">Home</a>
-          <a href="#">AI Tools</a>
-          <a href="#">Pricing</a>
-        </nav>
-
-        <div className="auth">
-          <button className="login">Login</button>
-          <button className="signup">Sign Up</button>
+        <div className="header-right">
+          <span className="status">AI Image Editor</span>
         </div>
       </header>
 
-      <main>
+      <main className="editor">
 
-        <section className="hero">
-          <h1>AI Image Editing Platform</h1>
-
-          <p>
-            Edit, enhance and transform your images with powerful AI tools.
-          </p>
-
-          <label className="uploadBox">
-            <div className="uploadIcon">☁️</div>
-
-            <h2>
-              {image ? "Image Uploaded" : "Upload Your Image"}
-            </h2>
-
+        <section className="top-section">
+          <div>
+            <h1>AI Image Editor</h1>
             <p>
-              Drag & drop your image here or click to upload
+              Edit your photos with powerful Pixora AI tools.
             </p>
+          </div>
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImage}
-            />
+          <button
+            className="upload-btn"
+            onClick={() => fileInput.current?.click()}
+          >
+            📁 Upload Image
+          </button>
 
-            <span>JPG • PNG • WEBP</span>
-          </label>
-
-          {image && (
-            <div className="preview">
-              <img src={image} alt="Uploaded" />
-
-              <div className="tools">
-                <button>✨ AI Enhance</button>
-                <button>🪄 Remove Background</button>
-                <button>🎨 Background Change</button>
-                <button>✏️ AI Edit</button>
-              </div>
-            </div>
-          )}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/*"
+            onChange={handleImage}
+            hidden
+          />
         </section>
 
-        <section className="toolsSection">
+        <section className="workspace">
 
-          <h2>Powerful AI Tools</h2>
+          <div className="preview-area">
 
-          <div className="toolsGrid">
+            {!image ? (
+              <div
+                className="upload-box"
+                onClick={() => fileInput.current?.click()}
+              >
+                <div className="upload-icon">🖼️</div>
 
-            <div className="toolCard">
-              <h3>🪄 Background Remover</h3>
-              <p>Remove image backgrounds automatically.</p>
-              <button>Try Now</button>
+                <h2>Upload an Image</h2>
+
+                <p>
+                  Select a JPG, PNG or WEBP image
+                </p>
+
+                <button className="choose-btn">
+                  Choose Image
+                </button>
+              </div>
+            ) : (
+              <div className="image-container">
+                <img
+                  src={image}
+                  alt="Pixora preview"
+                  style={filterStyle}
+                />
+              </div>
+            )}
+
+          </div>
+
+          <aside className="tools">
+
+            <div className="tools-title">
+              <h2>Editing Tools</h2>
+
+              <button
+                className="reset-btn"
+                onClick={resetEditor}
+              >
+                ↻ Reset
+              </button>
             </div>
 
-            <div className="toolCard">
-              <h3>✨ AI Generative Fill</h3>
-              <p>Add or replace objects using AI.</p>
-              <button>Try Now</button>
+            <div className="tool-group">
+
+              <label>
+                ☀️ Brightness
+                <strong>{brightness}%</strong>
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={brightness}
+                onChange={(e) =>
+                  setBrightness(Number(e.target.value))
+                }
+              />
+
             </div>
 
-            <div className="toolCard">
-              <h3>🗑️ Object Remover</h3>
-              <p>Remove unwanted people or objects.</p>
-              <button>Try Now</button>
+            <div className="tool-group">
+
+              <label>
+                ◐ Contrast
+                <strong>{contrast}%</strong>
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={contrast}
+                onChange={(e) =>
+                  setContrast(Number(e.target.value))
+                }
+              />
+
             </div>
 
-            <div className="toolCard">
-              <h3>🔍 AI Upscaler</h3>
-              <p>Increase image resolution with AI.</p>
-              <button>Try Now</button>
+            <div className="tool-group">
+
+              <label>
+                🎨 Saturation
+                <strong>{saturation}%</strong>
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={saturation}
+                onChange={(e) =>
+                  setSaturation(Number(e.target.value))
+                }
+              />
+
             </div>
 
-            <div className="toolCard">
-              <h3>🌈 Image Enhancer</h3>
-              <p>Improve lighting, colors and details.</p>
-              <button>Try Now</button>
+            <div className="tool-group">
+
+              <label>
+                🌫️ Blur
+                <strong>{blur}px</strong>
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={blur}
+                onChange={(e) =>
+                  setBlur(Number(e.target.value))
+                }
+              />
+
             </div>
 
-            <div className="toolCard">
-              <h3>🎭 Background Changer</h3>
-              <p>Change your image background.</p>
-              <button>Try Now</button>
+            <div className="tool-group">
+
+              <label>
+                ⚫ Black & White
+                <strong>{grayscale}%</strong>
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={grayscale}
+                onChange={(e) =>
+                  setGrayscale(Number(e.target.value))
+                }
+              />
+
+            </div>
+
+            <div className="rotate-section">
+
+              <h3>↻ Rotate</h3>
+
+              <div className="rotate-buttons">
+
+                <button
+                  onClick={() =>
+                    setRotation((r) => r - 90)
+                  }
+                >
+                  ↺ Left
+                </button>
+
+                <button
+                  onClick={() =>
+                    setRotation((r) => r + 90)
+                  }
+                >
+                  ↻ Right
+                </button>
+
+              </div>
+
+            </div>
+
+            <div className="actions">
+
+              <button
+                className="ai-btn"
+                onClick={() =>
+                  alert(
+                    "AI tools will be connected in the next version."
+                  )
+                }
+              >
+                ✨ AI Tools
+              </button>
+
+              <button
+                className="download-btn"
+                disabled={!image}
+                onClick={downloadImage}
+              >
+                ⬇️ Download Image
+              </button>
+
+            </div>
+
+          </aside>
+
+        </section>
+
+        <section className="ai-features">
+
+          <h2>Pixora AI Tools</h2>
+
+          <div className="feature-grid">
+
+            <div className="feature-card">
+              <div>✨</div>
+              <h3>AI Enhance</h3>
+              <p>
+                Automatically improve image quality.
+              </p>
+            </div>
+
+            <div className="feature-card">
+              <div>🪄</div>
+              <h3>Background Remove</h3>
+              <p>
+                Remove backgrounds using AI.
+              </p>
+            </div>
+
+            <div className="feature-card">
+              <div>🎭</div>
+              <h3>AI Filters</h3>
+              <p>
+                Create unique artistic effects.
+              </p>
+            </div>
+
+            <div className="feature-card">
+              <div>🧠</div>
+              <h3>AI Image Generator</h3>
+              <p>
+                Create images from text prompts.
+              </p>
             </div>
 
           </div>
+
         </section>
 
       </main>
 
       <footer>
-        <div>
-          <h3>Pixora AI</h3>
-          <p>Next-generation AI image editing platform.</p>
-        </div>
-
-        <div>
-          <h4>Product</h4>
-          <p>AI Tools</p>
-          <p>Pricing</p>
-        </div>
-
-        <div>
-          <h4>Company</h4>
-          <p>About</p>
-          <p>Contact</p>
-        </div>
-
-        <div>
-          <h4>Legal</h4>
-          <p>Privacy</p>
-          <p>Terms</p>
-        </div>
+        <p>
+          © 2026 Pixora AI • AI Image Editing Platform
+        </p>
       </footer>
 
     </div>
   );
-}
+                               }
