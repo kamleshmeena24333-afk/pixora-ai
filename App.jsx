@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import removeBackground from "@imgly/background-removal";
 export default function App() {
   const [image, setImage] = useState(null);
+  const [removingBackground, setRemovingBackground] = useState(false);
   const [fileName, setFileName] = useState("pixora-image");
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
