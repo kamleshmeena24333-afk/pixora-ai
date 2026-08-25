@@ -29,7 +29,24 @@ export default function App() {
 
     setImage(url);
     setFileName(file.name.split(".")[0]);
+const handleRemoveBackground = async () => {
+  if (!image || removingBackground) return;
 
+  try {
+    setRemovingBackground(true);
+
+    const blob = await removeBackground(image);
+
+    const newUrl = URL.createObjectURL(blob);
+
+    setImage(newUrl);
+  } catch (error) {
+    console.error("Background removal failed:", error);
+    alert("Background remove नहीं हो पाया। कृपया दोबारा कोशिश करें।");
+  } finally {
+    setRemovingBackground(false);
+  }
+};
     resetEditing();
   };
 
