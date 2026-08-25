@@ -264,7 +264,17 @@ Explain what this tool should do to the uploaded image.`
                       `
                     }}
                   />
+<h2>🤖 AI Tools</h2>
 
+<button
+  className="ai-button"
+  onClick={handleRemoveBackground}
+  disabled={removingBackground}
+>
+  {removingBackground
+    ? "⏳ Background हट रहा है..."
+    : "🪄 Remove Background"}
+</button>
                 </div>
 
               </div>
