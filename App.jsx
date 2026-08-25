@@ -105,16 +105,36 @@ export default function App() {
     img.src = image;
   };
 
-  const toolClick = (tool) => {
-    if (!image) {
-      alert("पहले image upload करें।");
-      return;
+  const toolClick = async (tool) => {
+  if (!image) {
+    alert("पहले image upload करें");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt: `You are Pixora AI image editor. 
+The user selected the AI tool: ${tool}.
+Explain what this tool should do to the uploaded image.`
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "AI API error");
     }
 
-    alert(
-      `${tool} selected!\n\nAI API जोड़ने के बाद यह tool वास्तव में AI processing करेगा।`
-    );
-  };
+    alert(data.text || "AI response received!");
+  } catch (error) {
+    alert("AI Error: " + error.message);
+  }
+};
 
   return (
     <div className="app">
