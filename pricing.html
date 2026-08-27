@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixora Pricing — Choose Plan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-50 glass border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center space-x-3">
+        <div class="w-10 h-10 gradient-btn rounded-xl flex items-center justify-center font-black text-white text-xl">P</div>
+        <span class="text-xl font-extrabold tracking-tight">Pixora<span class="text-purple-400">.AI</span></span>
+      </a>
+      <nav class="flex items-center space-x-6 text-sm font-medium text-gray-300">
+        <a href="index.html" class="hover:text-white">Studio</a>
+        <a href="gallery.html" class="hover:text-white">Gallery</a>
+        <a href="pricing.html" class="text-purple-400">Pricing</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-16 flex-1 w-full">
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <h1 class="text-4xl font-extrabold text-white">Simple, Transparent Pricing</h1>
+      <p class="text-gray-400 text-sm mt-3">Choose the credit tier that fits your creative needs.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <div class="glass p-8 rounded-3xl border border-gray-800 flex flex-col justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-white">Starter</h3>
+          <p class="text-xs text-gray-400 mt-1">For testing & personal experiments</p>
+          <div class="text-3xl font-extrabold text-white my-6">$0 <span class="text-xs font-normal text-gray-400">/ forever</span></div>
+          <ul class="space-y-3 text-xs text-gray-300">
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> 50 Daily Free Credits</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Standard Generation Speed</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Standard Resolution (1024px)</li>
+          </ul>
+        </div>
+        <button class="w-full mt-8 py-3 rounded-xl border border-gray-700 hover:border-purple-500 font-semibold text-xs transition">Current Plan</button>
+      </div>
+
+      <div class="glass p-8 rounded-3xl border-2 border-purple-500/80 relative flex flex-col justify-between shadow-2xl shadow-purple-900/20">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 gradient-btn text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full text-white">Most Popular</span>
+        <div>
+          <h3 class="text-lg font-bold text-white">Pro Creator</h3>
+          <p class="text-xs text-gray-400 mt-1">For professionals & regular creators</p>
+          <div class="text-3xl font-extrabold text-white my-6">$19 <span class="text-xs font-normal text-gray-400">/ month</span></div>
+          <ul class="space-y-3 text-xs text-gray-300">
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> 1,500 Monthly Fast Credits</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> 4K Upscaler Access</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Commercial Usage Rights</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Private Generation Mode</li>
+          </ul>
+        </div>
+        <button class="w-full mt-8 py-3 rounded-xl gradient-btn font-bold text-xs text-white transition">Upgrade to Pro</button>
+      </div>
+
+      <div class="glass p-8 rounded-3xl border border-gray-800 flex flex-col justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-white">Studio Scale</h3>
+          <p class="text-xs text-gray-400 mt-1">For agencies, games & design teams</p>
+          <div class="text-3xl font-extrabold text-white my-6">$59 <span class="text-xs font-normal text-gray-400">/ month</span></div>
+          <ul class="space-y-3 text-xs text-gray-300">
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Unlimited Relaxed Credits</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Dedicated API Access</li>
+            <li><i class="fa-solid fa-check text-purple-400 mr-2"></i> Priority Queue Latency</li>
+          </ul>
+        </div>
+        <button class="w-full mt-8 py-3 rounded-xl border border-gray-700 hover:border-purple-500 font-semibold text-xs transition">Contact Sales</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="glass border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    Pixora AI Billing & Subscriptions
+  </footer>
+</body>
+</html>
