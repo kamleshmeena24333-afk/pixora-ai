@@ -20,6 +20,18 @@ const stylePrompts = {
 
 // Handle Image Generation
 async function handleGenerate() {
+ // Image save karne ka helper function
+function saveToHistory(prompt, url, style) {
+  let history = JSON.parse(localStorage.getItem('pixora_history') || '[]');
+  history.unshift({
+    prompt: prompt,
+    img: url,
+    style: style,
+    date: new Date().toLocaleDateString()
+  });
+  localStorage.setItem('pixora_history', JSON.stringify(history));
+}
+
   const promptInput = document.getElementById('prompt-input');
   const styleSelect = document.getElementById('style-select');
   const ratioSelect = document.getElementById('ratio-select');
