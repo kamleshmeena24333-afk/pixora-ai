@@ -1,68 +1,84 @@
 // State Management
 let credits = 48;
 
-// Sample Pre-loaded gallery images
-const showcaseImages = [
-  { prompt: "Cyberpunk Samurai in rain", style: "Cyberpunk", img: "https://picsum.photos/seed/cyber1/600/600" },
-  { prompt: "Futuristic Glass Architecture in Alps", style: "Photorealistic", img: "https://picsum.photos/seed/arch/600/600" },
-  { prompt: "Isometric floating enchanted island", style: "3D Render", img: "https://picsum.photos/seed/island/600/600" },
-  { prompt: "Ethereal spirit wolf in cosmic forest", style: "Digital Art", img: "https://picsum.photos/seed/wolf/600/600" },
-  { prompt: "Retro 80s synthwave sports car", style: "Cyberpunk", img: "https://picsum.photos/seed/synth/600/600" },
-  { prompt: "Ancient mystic temple in clouds", style: "Photorealistic", img: "https://picsum.photos/seed/cloud/600/600" }
-];
+// Aspect ratio mapping to width/height
+const ratioMap = {
+  "1:1": { width: 1024, height: 1024 },
+  "16:9": { width: 1280, height: 720 },
+  "9:16": { width: 720, height: 1280 },
+  "4:3": { width: 1024, height: 768 }
+};
+
+// Style enhancers for better prompt results
+const stylePrompts = {
+  "photorealistic": "hyperrealistic, 8k resolution, professional photography, highly detailed, realistic lighting",
+  "cyberpunk": "cyberpunk neon aesthetic, futuristic city glow, volumetric smoke, high contrast, vibrant synthwave colors",
+  "anime": "anime style, makoto shinkai aesthetic, vivid studio anime illustration, crisp lines, 4k",
+  "3d-render": "octane 3d render, unreal engine 5, ray tracing, cinematic lighting, ultra sharp",
+  "oil-painting": "classical fine art oil painting, visible textured brush strokes, masterpiece canvas art"
+};
 
 // Handle Image Generation
-function handleGenerate() {
+async function handleGenerate() {
   const promptInput = document.getElementById('prompt-input');
   const styleSelect = document.getElementById('style-select');
+  const ratioSelect = document.getElementById('ratio-select');
   const batchSelect = document.getElementById('batch-select');
   const emptyState = document.getElementById('empty-state');
   const loader = document.getElementById('loader');
   const resultsGrid = document.getElementById('results-grid');
   const creditDisplay = document.getElementById('credit-count');
 
-  const prompt = promptInput.value.trim();
-  const batchCount = parseInt(batchSelect.value);
+  const rawPrompt = promptInput.value.trim();
+  const selectedStyle = styleSelect ? styleSelect.value : 'photorealistic';
+  const selectedRatio = ratioSelect ? ratioSelect.value : '1:1';
+  const batchCount = batchSelect ? parseInt(batchSelect.value) : 1;
 
-  if (!prompt) {
-    alert("Please enter a creative prompt first!");
+  if (!rawPrompt) {
+    alert("Kripya pehle prompt likhein!");
     return;
   }
 
   if (credits < batchCount) {
-    alert("Not enough credits! Upgrade your plan.");
+    alert("Credits khatam ho gaye hain! Naye plan par upgrade karein.");
     return;
   }
 
   // Deduct Credits
   credits -= batchCount;
-  if(creditDisplay) creditDisplay.innerText = credits;
+  if (creditDisplay) creditDisplay.innerText = credits;
 
-  // Show Loading state
-  emptyState.classList.add('hidden');
-  resultsGrid.classList.add('hidden');
-  loader.classList.remove('hidden');
-
-  // Simulated AI API latency
-  setTimeout(() => {
-    loader.classList.add('hidden');
+  // Show Loading Animation
+  if (emptyState) emptyState.classList.add('hidden');
+  if (resultsGrid) {
+    resultsGrid.classList.add('hidden');
     resultsGrid.innerHTML = '';
-    resultsGrid.classList.remove('hidden');
+  }
+  if (loader) loader.classList.remove('hidden');
 
+  const dimensions = ratioMap[selectedRatio] || { width: 1024, height: 1024 };
+  const styleAddon = stylePrompts[selectedStyle] || "";
+  const finalPrompt = encodeURIComponent(`${rawPrompt}, ${styleAddon}`);
+
+  try {
     for (let i = 0; i < batchCount; i++) {
-      const randomSeed = Math.floor(Math.random() * 99999);
-      const imgUrl = `https://picsum.photos/seed/${randomSeed}/800/800`;
+      const seed = Math.floor(Math.random() * 9999999);
+      // Free Pollinations Real AI Image Generator Endpoint
+      const imageUrl = `https://image.pollinations.ai/prompt/${finalPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${seed}&nologo=true&enhance=true`;
+
+      // Preload image to ensure it is ready
+      await preloadImage(imageUrl);
 
       const card = document.createElement('div');
       card.className = "relative group rounded-2xl overflow-hidden glass border border-gray-800 shadow-xl";
       card.innerHTML = `
-        <img src="${imgUrl}" alt="${prompt}" class="w-full h-72 object-cover transition duration-500 group-hover:scale-105" />
+        <img src="${imageUrl}" alt="${rawPrompt}" class="w-full h-80 object-cover transition duration-500 group-hover:scale-105" />
         <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-          <p class="text-xs text-gray-200 line-clamp-2 mb-3">${prompt} (${styleSelect.value})</p>
+          <p class="text-xs text-gray-200 line-clamp-2 mb-3 font-medium">${rawPrompt} (${selectedStyle})</p>
           <div class="flex gap-2">
-            <a href="${imgUrl}" target="_blank" download class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1">
+            <a href="${imageUrl}" target="_blank" download="pixora-ai-${seed}.jpg" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1">
               <i class="fa-solid fa-download"></i>
-              <span>Save</span>
+              <span>Download</span>
             </a>
             <button onclick="triggerTool('Upscaler')" class="px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-white rounded-lg text-xs font-semibold">
               4K Upscale
@@ -70,17 +86,40 @@ function handleGenerate() {
           </div>
         </div>
       `;
-      resultsGrid.appendChild(card);
+      if (resultsGrid) resultsGrid.appendChild(card);
     }
-  }, 1800);
+  } catch (err) {
+    console.error("Generation error:", err);
+    alert("Image load hone me samasya aayi. Kripya dobara try karein.");
+  } finally {
+    if (loader) loader.classList.add('hidden');
+    if (resultsGrid) resultsGrid.classList.remove('hidden');
+  }
 }
 
-// Tool trigger simulation
+// Helper to wait until image loads
+function preloadImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // continue even if one fails
+    img.src = url;
+  });
+}
+
+// Tool trigger notification
 function triggerTool(toolName) {
-  alert(`Launching ${toolName} Module. Upload your image to process.`);
+  alert(`${toolName} feature ke liye image upload karein ya Studio se select karein.`);
 }
 
 // Gallery Page Renderer
+const showcaseImages = [
+  { prompt: "Cyberpunk Samurai in rain with glowing neon sword", style: "Cyberpunk", img: "https://image.pollinations.ai/prompt/cyberpunk%20samurai%20in%20rain%20neon%20lighting?width=600&height=600&nologo=true" },
+  { prompt: "Futuristic Glass Villa in snowy mountains, photorealistic", style: "Photorealistic", img: "https://image.pollinations.ai/prompt/futuristic%20glass%20villa%20in%20snowy%20alps%208k?width=600&height=600&nologo=true" },
+  { prompt: "Cute magical spirit fox in glowing autumn forest, 3d render", style: "3D Render", img: "https://image.pollinations.ai/prompt/cute%20spirit%20fox%20in%20glowing%20autumn%20forest%203d%20octane?width=600&height=600&nologo=true" },
+  { prompt: "Retro 80s synthwave sunset sports car racing highway", style: "Digital Art", img: "https://image.pollinations.ai/prompt/synthwave%20retro%2080s%20sports%20car%20sunset?width=600&height=600&nologo=true" }
+];
+
 function renderGallery() {
   const container = document.getElementById('gallery-container');
   if (!container) return;
@@ -91,7 +130,7 @@ function renderGallery() {
     card.className = "glass rounded-2xl overflow-hidden border border-gray-800 group";
     card.innerHTML = `
       <div class="relative overflow-hidden aspect-square">
-        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+        <img src="${item.img}" alt="${item.prompt}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         <span class="absolute top-3 left-3 bg-gray-950/70 border border-gray-700 px-2 py-1 rounded-md text-[10px] text-purple-300 font-semibold">${item.style}</span>
       </div>
       <div class="p-4">
@@ -102,7 +141,7 @@ function renderGallery() {
   });
 }
 
-// Auth Modal
+// Modal handling
 function openAuthModal() {
   document.getElementById('auth-modal')?.classList.remove('hidden');
 }
