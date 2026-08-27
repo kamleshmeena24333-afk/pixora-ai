@@ -6,8 +6,8 @@
 
 body {
   font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  color: #111827;
+  background: #f4f7fb;
+  color: #172033;
 }
 
 button,
@@ -15,15 +15,21 @@ input {
   font-family: inherit;
 }
 
+button {
+  border: none;
+  cursor: pointer;
+}
+
+/* APP */
 .app {
   min-height: 100vh;
 }
 
-/* Header */
+/* HEADER */
 .header {
   height: 70px;
   background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e9f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -33,7 +39,7 @@ input {
 .logo {
   font-size: 24px;
   font-weight: 800;
-  color: #6d28d9;
+  color: #635bff;
 }
 
 .header nav {
@@ -48,14 +54,14 @@ input {
 }
 
 .header nav span:hover {
-  color: #6d28d9;
+  color: #635bff;
 }
 
-/* Main */
+/* MAIN */
 .editor {
   width: 92%;
-  max-width: 1250px;
-  margin: 40px auto;
+  max-width: 1300px;
+  margin: 35px auto;
 }
 
 .editor h1 {
@@ -66,14 +72,14 @@ input {
 
 .subtitle {
   text-align: center;
-  color: #6b7280;
+  color: #667085;
   margin-bottom: 35px;
 }
 
-/* Upload */
+/* UPLOAD */
 .upload-box {
   background: white;
-  border: 2px dashed #c4b5fd;
+  border: 2px dashed #aab4c3;
   border-radius: 20px;
   min-height: 300px;
   display: flex;
@@ -86,8 +92,8 @@ input {
 }
 
 .upload-box:hover {
-  border-color: #7c3aed;
-  background: #faf9ff;
+  border-color: #635bff;
+  background: #f8f7ff;
 }
 
 .upload-icon {
@@ -100,18 +106,17 @@ input {
 }
 
 .upload-box p {
-  color: #6b7280;
+  color: #667085;
   margin-bottom: 20px;
 }
 
-/* Buttons */
+/* BUTTONS */
 button {
-  border: none;
+  background: #e9ecf3;
+  color: #172033;
+  font-weight: 600;
   border-radius: 10px;
   padding: 11px 18px;
-  cursor: pointer;
-  background: #e5e7eb;
-  font-weight: 600;
   transition: 0.2s;
 }
 
@@ -120,15 +125,15 @@ button:hover {
 }
 
 button.primary {
-  background: #6d28d9;
+  background: #635bff;
   color: white;
 }
 
 button.primary:hover {
-  background: #5b21b6;
+  background: #5148e8;
 }
 
-/* Workspace */
+/* WORKSPACE */
 .workspace {
   display: grid;
   grid-template-columns: 1fr 330px;
@@ -136,7 +141,7 @@ button.primary:hover {
   margin-top: 25px;
 }
 
-/* Preview */
+/* PREVIEW */
 .preview {
   min-height: 600px;
   background: #111827;
@@ -155,7 +160,7 @@ button.primary:hover {
   border-radius: 8px;
 }
 
-/* Controls */
+/* CONTROLS */
 .controls {
   background: white;
   border-radius: 18px;
@@ -179,16 +184,16 @@ button.primary:hover {
 
 .controls label span {
   float: right;
-  color: #6d28d9;
+  color: #635bff;
 }
 
 .controls input[type="range"] {
   width: 100%;
   margin-top: 10px;
-  accent-color: #6d28d9;
+  accent-color: #635bff;
 }
 
-/* Transform */
+/* TRANSFORM */
 .controls h2:nth-of-type(2) {
   margin-top: 25px;
 }
@@ -203,7 +208,7 @@ button.primary:hover {
   min-height: 42px;
 }
 
-/* Actions */
+/* ACTIONS */
 .actions {
   display: flex;
   gap: 10px;
@@ -214,15 +219,15 @@ button.primary:hover {
   flex: 1;
 }
 
-/* Footer */
+/* FOOTER */
 footer {
   text-align: center;
   padding: 30px;
-  color: #6b7280;
+  color: #667085;
   font-size: 14px;
 }
 
-/* Mobile */
+/* MOBILE */
 @media (max-width: 850px) {
   .header {
     padding: 0 20px;
