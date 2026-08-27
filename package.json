@@ -1,20 +1,23 @@
 {
   "name": "pixora-ai",
-  "version": "1.0.0",
   "private": true,
+  "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@imgly/background-removal": "^1.7.0",
-    "onnxruntime-web": "^1.21.0",
-    "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "vite": "^6.0.0",
-    "@vitejs/plugin-react": "^4.3.4"
+    "@imgly/background-removal": "^1.7.0",
+    "lucide-react": "^0.400.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.3.4"
+  }
 }
