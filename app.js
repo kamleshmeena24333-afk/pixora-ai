@@ -1,7 +1,7 @@
 // State Management
-let credits = 48;
+let credits = 50;
 
-// Aspect ratio mapping to width/height
+// Aspect Ratio Dimensions
 const ratioMap = {
   "1:1": { width: 1024, height: 1024 },
   "16:9": { width: 1280, height: 720 },
@@ -9,29 +9,17 @@ const ratioMap = {
   "4:3": { width: 1024, height: 768 }
 };
 
-// Style enhancers for better prompt results
-const stylePrompts = {
-  "photorealistic": "hyperrealistic, 8k resolution, professional photography, highly detailed, realistic lighting",
-  "cyberpunk": "cyberpunk neon aesthetic, futuristic city glow, volumetric smoke, high contrast, vibrant synthwave colors",
-  "anime": "anime style, makoto shinkai aesthetic, vivid studio anime illustration, crisp lines, 4k",
-  "3d-render": "octane 3d render, unreal engine 5, ray tracing, cinematic lighting, ultra sharp",
-  "oil-painting": "classical fine art oil painting, visible textured brush strokes, masterpiece canvas art"
+// Style Enhancement Prompts
+const styleEnhancers = {
+  "photorealistic": "8k uhd, photorealistic, professional lighting, highly detailed photograph",
+  "cyberpunk": "cyberpunk style, neon glow, futuristic aesthetic, volumetric lighting, dark synthwave",
+  "anime": "vibrant anime style, detailed anime illustration, makoto shinkai style, sharp lines",
+  "3d-render": "octane 3d render, unreal engine 5, cinematic 3d art, volumetric lighting, 8k",
+  "oil-painting": "oil on canvas, classical oil painting, textured strokes, fine art masterpiece"
 };
 
-// Handle Image Generation
+// Main Generate Function
 async function handleGenerate() {
- // Image save karne ka helper function
-function saveToHistory(prompt, url, style) {
-  let history = JSON.parse(localStorage.getItem('pixora_history') || '[]');
-  history.unshift({
-    prompt: prompt,
-    img: url,
-    style: style,
-    date: new Date().toLocaleDateString()
-  });
-  localStorage.setItem('pixora_history', JSON.stringify(history));
-}
-
   const promptInput = document.getElementById('prompt-input');
   const styleSelect = document.getElementById('style-select');
   const ratioSelect = document.getElementById('ratio-select');
@@ -47,20 +35,20 @@ function saveToHistory(prompt, url, style) {
   const batchCount = batchSelect ? parseInt(batchSelect.value) : 1;
 
   if (!rawPrompt) {
-    alert("Kripya pehle prompt likhein!");
+    alert("Kripya prompt likhein!");
     return;
   }
 
   if (credits < batchCount) {
-    alert("Credits khatam ho gaye hain! Naye plan par upgrade karein.");
+    alert("Credits khatam ho gaye hain!");
     return;
   }
 
-  // Deduct Credits
+  // Credits deduct & update
   credits -= batchCount;
   if (creditDisplay) creditDisplay.innerText = credits;
 
-  // Show Loading Animation
+  // UI state change
   if (emptyState) emptyState.classList.add('hidden');
   if (resultsGrid) {
     resultsGrid.classList.add('hidden');
@@ -69,112 +57,64 @@ function saveToHistory(prompt, url, style) {
   if (loader) loader.classList.remove('hidden');
 
   const dimensions = ratioMap[selectedRatio] || { width: 1024, height: 1024 };
-  const styleAddon = stylePrompts[selectedStyle] || "";
-  const finalPrompt = encodeURIComponent(`${rawPrompt}, ${styleAddon}`);
+  const enhancer = styleEnhancers[selectedStyle] || "";
+  
+  // Clean encoding
+  const cleanPrompt = `${rawPrompt}, ${enhancer}`.replace(/[\n\r]+/g, ' ');
+  const encodedPrompt = encodeURIComponent(cleanPrompt);
 
   try {
     for (let i = 0; i < batchCount; i++) {
-      const seed = Math.floor(Math.random() * 9999999);
-      // Free Pollinations Real AI Image Generator Endpoint
-      const imageUrl = `https://image.pollinations.ai/prompt/${finalPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${seed}&nologo=true&enhance=true`;
+      const seed = Math.floor(Math.random() * 10000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${seed}&nologo=true&model=flux`;
 
-      // Preload image to ensure it is ready
-      await preloadImage(imageUrl);
+      // Save to local storage history
+      saveToHistory(rawPrompt, imageUrl, selectedStyle);
 
       const card = document.createElement('div');
-      card.className = "relative group rounded-2xl overflow-hidden glass border border-gray-800 shadow-xl";
+      card.className = "relative group rounded-2xl overflow-hidden glass border border-gray-800 shadow-xl min-h-[300px] flex items-center justify-center bg-gray-950";
+      
       card.innerHTML = `
-        <img src="${imageUrl}" alt="${rawPrompt}" class="w-full h-80 object-cover transition duration-500 group-hover:scale-105" />
+        <img 
+          src="${imageUrl}" 
+          alt="${rawPrompt}" 
+          loading="lazy"
+          class="w-full h-80 object-cover transition duration-500 group-hover:scale-105" 
+          onload="this.classList.remove('opacity-0')"
+        />
         <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-          <p class="text-xs text-gray-200 line-clamp-2 mb-3 font-medium">${rawPrompt} (${selectedStyle})</p>
+          <p class="text-xs text-gray-200 line-clamp-2 mb-3 font-medium">${rawPrompt}</p>
           <div class="flex gap-2">
-            <a href="${imageUrl}" target="_blank" download="pixora-ai-${seed}.jpg" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1">
+            <a href="${imageUrl}" target="_blank" download="pixora-${seed}.jpg" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1">
               <i class="fa-solid fa-download"></i>
               <span>Download</span>
             </a>
-            <button onclick="triggerTool('Upscaler')" class="px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 text-white rounded-lg text-xs font-semibold">
-              4K Upscale
-            </button>
           </div>
         </div>
       `;
       if (resultsGrid) resultsGrid.appendChild(card);
     }
-  } catch (err) {
-    console.error("Generation error:", err);
-    alert("Image load hone me samasya aayi. Kripya dobara try karein.");
+  } catch (error) {
+    console.error(error);
   } finally {
     if (loader) loader.classList.add('hidden');
     if (resultsGrid) resultsGrid.classList.remove('hidden');
   }
 }
 
-// Helper to wait until image loads
-function preloadImage(url) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => resolve(); // continue even if one fails
-    img.src = url;
-  });
+// Save to Local History
+function saveToHistory(prompt, url, style) {
+  try {
+    let history = JSON.parse(localStorage.getItem('pixora_history') || '[]');
+    history.unshift({ prompt, img: url, style, date: new Date().toLocaleDateString() });
+    if (history.length > 20) history.pop();
+    localStorage.setItem('pixora_history', JSON.stringify(history));
+  } catch(e) {}
 }
 
-// Tool trigger notification
+// Tool trigger alert
 function triggerTool(toolName) {
-  alert(`${toolName} feature ke liye image upload karein ya Studio se select karein.`);
-}
-
-// Gallery Page Renderer
-const showcaseImages = [
-  { prompt: "Cyberpunk Samurai in rain with glowing neon sword", style: "Cyberpunk", img: "https://image.pollinations.ai/prompt/cyberpunk%20samurai%20in%20rain%20neon%20lighting?width=600&height=600&nologo=true" },
-  { prompt: "Futuristic Glass Villa in snowy mountains, photorealistic", style: "Photorealistic", img: "https://image.pollinations.ai/prompt/futuristic%20glass%20villa%20in%20snowy%20alps%208k?width=600&height=600&nologo=true" },
-  { prompt: "Cute magical spirit fox in glowing autumn forest, 3d render", style: "3D Render", img: "https://image.pollinations.ai/prompt/cute%20spirit%20fox%20in%20glowing%20autumn%20forest%203d%20octane?width=600&height=600&nologo=true" },
-  { prompt: "Retro 80s synthwave sunset sports car racing highway", style: "Digital Art", img: "https://image.pollinations.ai/prompt/synthwave%20retro%2080s%20sports%20car%20sunset?width=600&height=600&nologo=true" }
-];
-
-function renderGallery() {
-  const container = document.getElementById('gallery-container');
-  if (!container) return;
-function renderGallery() {
-  const container = document.getElementById('gallery-container');
-  if (!container) return;
-
-  const localItems = JSON.parse(localStorage.getItem('pixora_history') || '[]');
-  const allItems = [...localItems, ...showcaseImages];
-
-  container.innerHTML = '';
-  allItems.forEach(item => {
-    const card = document.createElement('div');
-    card.className = "glass rounded-2xl overflow-hidden border border-gray-800 group";
-    card.innerHTML = `
-      <div class="relative overflow-hidden aspect-square">
-        <img src="${item.img}" alt="${item.prompt}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-        <span class="absolute top-3 left-3 bg-gray-950/70 border border-gray-700 px-2 py-1 rounded-md text-[10px] text-purple-300 font-semibold">${item.style}</span>
-      </div>
-      <div class="p-4">
-        <p class="text-xs text-gray-300 font-medium truncate">${item.prompt}</p>
-        <a href="${item.img}" target="_blank" download class="text-[11px] text-purple-400 hover:underline mt-2 inline-block">Download HD</a>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-  container.innerHTML = '';
-  showcaseImages.forEach(item => {
-    const card = document.createElement('div');
-    card.className = "glass rounded-2xl overflow-hidden border border-gray-800 group";
-    card.innerHTML = `
-      <div class="relative overflow-hidden aspect-square">
-        <img src="${item.img}" alt="${item.prompt}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-        <span class="absolute top-3 left-3 bg-gray-950/70 border border-gray-700 px-2 py-1 rounded-md text-[10px] text-purple-300 font-semibold">${item.style}</span>
-      </div>
-      <div class="p-4">
-        <p class="text-xs text-gray-300 font-medium truncate">${item.prompt}</p>
-      </div>
-    `;
-    container.appendChild(card);
-  });
+  alert(`${toolName} feature ke liye page open karein.`);
 }
 
 // Modal handling
