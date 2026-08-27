@@ -1,36 +1,274 @@
 * {
   box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: #f7f8fc;
-  color: #171923;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #111827;
 }
 
 button,
-input,
-textarea,
-select {
-  font: inherit;
+input {
+  font-family: inherit;
 }
 
-button {
+.app {
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  height: 70px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6%;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: #6d28d9;
+}
+
+.header nav {
+  display: flex;
+  gap: 28px;
+}
+
+.header nav span {
+  color: #4b5563;
+  font-size: 15px;
   cursor: pointer;
 }
 
-img {
-  max-width: 100%;
+.header nav span:hover {
+  color: #6d28d9;
 }
+
+/* Main */
+.editor {
+  width: 92%;
+  max-width: 1250px;
+  margin: 40px auto;
+}
+
+.editor h1 {
+  text-align: center;
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 35px;
+}
+
+/* Upload */
+.upload-box {
+  background: white;
+  border: 2px dashed #c4b5fd;
+  border-radius: 20px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 30px;
+  transition: 0.2s;
+}
+
+.upload-box:hover {
+  border-color: #7c3aed;
+  background: #faf9ff;
+}
+
+.upload-icon {
+  font-size: 55px;
+  margin-bottom: 15px;
+}
+
+.upload-box h2 {
+  margin-bottom: 8px;
+}
+
+.upload-box p {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* Buttons */
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 18px;
+  cursor: pointer;
+  background: #e5e7eb;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button.primary {
+  background: #6d28d9;
+  color: white;
+}
+
+button.primary:hover {
+  background: #5b21b6;
+}
+
+/* Workspace */
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 25px;
+  margin-top: 25px;
+}
+
+/* Preview */
+.preview {
+  min-height: 600px;
+  background: #111827;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  overflow: hidden;
+}
+
+.preview img {
+  max-width: 100%;
+  max-height: 560px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Controls */
+.controls {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.controls h2 {
+  margin-bottom: 20px;
+  font-size: 22px;
+}
+
+.controls label {
+  display: block;
+  margin-bottom: 20px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.controls label span {
+  float: right;
+  color: #6d28d9;
+}
+
+.controls input[type="range"] {
+  width: 100%;
+  margin-top: 10px;
+  accent-color: #6d28d9;
+}
+
+/* Transform */
+.controls h2:nth-of-type(2) {
+  margin-top: 25px;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.buttons button {
+  min-height: 42px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 850px) {
+  .header {
+    padding: 0 20px;
+  }
+
+  .header nav {
+    display: none;
+  }
+
+  .editor {
+    width: 94%;
+    margin-top: 25px;
+  }
+
+  .editor h1 {
+    font-size: 30px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    min-height: 400px;
+  }
+
+  .controls {
+    max-height: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .editor h1 {
+    font-size: 26px;
+  }
+
+  .upload-box {
+    min-height: 250px;
+  }
+
+  .preview {
+    min-height: 300px;
+    padding: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+  }
