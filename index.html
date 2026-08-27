@@ -1,18 +1,233 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Pixora AI - Create, edit and enhance images with powerful AI tools."
-    />
-    <title>Pixora AI — AI Image Editor</title>
-  </head>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Studio - Smart Photo Editor</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #0b0f19; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Navbar */
+        header { background: #111827; border-bottom: 1px solid #1f2937; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 20px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .badge { background: #0284c7; color: white; font-size: 11px; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 600; }
 
-  <body>
-    <div id="root"></div>
+        /* Main Workspace */
+        .workspace { display: flex; flex: 1; height: calc(100vh - 65px); }
+        
+        /* Sidebar Tools */
+        .sidebar { width: 320px; background: #111827; border-right: 1px solid #1f2937; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .tool-section { background: #1e293b; padding: 15px; border-radius: 10px; border: 1px solid #334155; }
+        .tool-section h3 { font-size: 14px; margin-bottom: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+        /* Upload Area */
+        .upload-card { border: 2px dashed #475569; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: #0f172a; }
+        .upload-card:hover { border-color: #38bdf8; }
+        input[type="file"] { display: none; }
+
+        /* Sliders */
+        .slider-group { margin-bottom: 12px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #cbd5e1; }
+        input[type="range"] { width: 100%; accent-color: #38bdf8; background: #334155; height: 5px; border-radius: 5px; }
+
+        /* Buttons */
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+        .btn-ai { background: linear-gradient(135deg, #0284c7, #2563eb); color: white; margin-bottom: 10px; }
+        .btn-ai:hover { opacity: 0.9; }
+        .btn-reset { background: #334155; color: #cbd5e1; }
+        .btn-download { background: #10b981; color: white; margin-top: auto; }
+        .btn-download:hover { background: #059669; }
+
+        /* Canvas Stage */
+        .stage { flex: 1; background: #090d16; display: flex; justify-content: center; align-items: center; padding: 30px; position: relative; overflow: hidden; }
+        .canvas-container { max-width: 90%; max-height: 85%; display: flex; justify-content: center; align-items: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-radius: 8px; }
+        canvas { max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: 8px; }
+        
+        /* Transparent Checkerboard Pattern */
+        .checkerboard { background: repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 50% / 20px 20px; }
+
+        /* Status Loader */
+        .loader { position: absolute; top: 20px; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; padding: 10px 20px; border-radius: 30px; font-size: 14px; display: none; }
+        
+        @media (max-width: 768px) {
+            .workspace { flex-direction: column-reverse; height: auto; }
+            .sidebar { width: 100%; border-right: none; }
+            canvas { max-height: 50vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">⚡ AI Studio <span class="badge">PRO</span></div>
+        <div style="font-size: 13px; color: #94a3b8;">100% Free & In-Browser</div>
+    </header>
+
+    <div class="workspace">
+        <div class="sidebar">
+            
+            <label class="upload-card" for="imageInput">
+                <span id="uploadLabel">📁 Photo Upload Karein</span>
+                <input type="file" id="imageInput" accept="image/*">
+            </label>
+
+            <div class="tool-section">
+                <h3>AI Actions</h3>
+                <button class="btn btn-ai" id="bgRemoveBtn">✨ AI Remove Background</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>Filters & Adjust</h3>
+                
+                <div class="slider-group">
+                    <label><span>Brightness</span><span id="valBrightness">100%</span></label>
+                    <input type="range" id="brightness" min="0" max="200" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <label><span>Contrast</span><span id="valContrast">100%</span></label>
+                    <input type="range" id="contrast" min="0" max="200" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <label><span>Saturation</span><span id="valSaturation">100%</span></label>
+                    <input type="range" id="saturation" min="0" max="200" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <label><span>Blur Effect</span><span id="valBlur">0px</span></label>
+                    <input type="range" id="blur" min="0" max="10" value="0">
+                </div>
+
+                <button class="btn btn-reset" id="resetFilters">Reset Filters</button>
+            </div>
+
+            <button class="btn btn-download" id="downloadBtn">📥 Download Result (PNG)</button>
+        </div>
+
+        <div class="stage">
+            <div class="loader" id="loader">⏳ AI background remove kar raha hai... Please wait...</div>
+            <div class="canvas-container checkerboard">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm';
+
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const loader = document.getElementById('loader');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const bgRemoveBtn = document.getElementById('bgRemoveBtn');
+
+        // Filter Inputs
+        const brightnessInput = document.getElementById('brightness');
+        const contrastInput = document.getElementById('contrast');
+        const saturationInput = document.getElementById('saturation');
+        const blurInput = document.getElementById('blur');
+        const resetFiltersBtn = document.getElementById('resetFilters');
+
+        let currentImage = new Image();
+        let isImageLoaded = false;
+
+        // Image Selection Handler
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImage.onload = () => {
+                    canvas.width = currentImage.width;
+                    canvas.height = currentImage.height;
+                    renderCanvas();
+                    isImageLoaded = true;
+                    document.getElementById('uploadLabel').innerText = "🔄 Change Photo";
+                };
+                currentImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Apply Filters on Canvas
+        function renderCanvas() {
+            if (!currentImage.src) return;
+
+            const b = brightnessInput.value;
+            const c = contrastInput.value;
+            const s = saturationInput.value;
+            const bl = blurInput.value;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${bl}px)`;
+            ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+        }
+
+        // Sliders Listeners
+        [brightnessInput, contrastInput, saturationInput, blurInput].forEach(slider => {
+            slider.addEventListener('input', () => {
+                document.getElementById(`val${slider.id.charAt(0).toUpperCase() + slider.id.slice(1)}`).innerText = 
+                    slider.id === 'blur' ? slider.value + 'px' : slider.value + '%';
+                renderCanvas();
+            });
+        });
+
+        // Reset Filters
+        resetFiltersBtn.addEventListener('click', () => {
+            brightnessInput.value = 100;
+            contrastInput.value = 100;
+            saturationInput.value = 100;
+            blurInput.value = 0;
+            
+            document.getElementById('valBrightness').innerText = '100%';
+            document.getElementById('valContrast').innerText = '100%';
+            document.getElementById('valSaturation').innerText = '100%';
+            document.getElementById('valBlur').innerText = '0px';
+
+            renderCanvas();
+        });
+
+        // AI Background Removal
+        bgRemoveBtn.addEventListener('click', async () => {
+            if (!isImageLoaded) {
+                alert("Pehle photo upload karein!");
+                return;
+            }
+
+            loader.style.display = "block";
+            try {
+                const blob = await imglyRemoveBackground(currentImage.src);
+                const transparentUrl = URL.createObjectURL(blob);
+                
+                const newImg = new Image();
+                newImg.onload = () => {
+                    currentImage = newImg;
+                    renderCanvas();
+                    loader.style.display = "none";
+                };
+                newImg.src = transparentUrl;
+            } catch (err) {
+                console.error(err);
+                alert("Error: AI process complete nahi ho paya.");
+                loader.style.display = "none";
+            }
+        });
+
+        // High Quality PNG Download
+        downloadBtn.addEventListener('click', () => {
+            if (!isImageLoaded) {
+                alert("Pehle photo edit karein!");
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'edited-photo.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
 </html>
