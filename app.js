@@ -135,6 +135,30 @@ const showcaseImages = [
 function renderGallery() {
   const container = document.getElementById('gallery-container');
   if (!container) return;
+function renderGallery() {
+  const container = document.getElementById('gallery-container');
+  if (!container) return;
+
+  const localItems = JSON.parse(localStorage.getItem('pixora_history') || '[]');
+  const allItems = [...localItems, ...showcaseImages];
+
+  container.innerHTML = '';
+  allItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = "glass rounded-2xl overflow-hidden border border-gray-800 group";
+    card.innerHTML = `
+      <div class="relative overflow-hidden aspect-square">
+        <img src="${item.img}" alt="${item.prompt}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+        <span class="absolute top-3 left-3 bg-gray-950/70 border border-gray-700 px-2 py-1 rounded-md text-[10px] text-purple-300 font-semibold">${item.style}</span>
+      </div>
+      <div class="p-4">
+        <p class="text-xs text-gray-300 font-medium truncate">${item.prompt}</p>
+        <a href="${item.img}" target="_blank" download class="text-[11px] text-purple-400 hover:underline mt-2 inline-block">Download HD</a>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
 
   container.innerHTML = '';
   showcaseImages.forEach(item => {
