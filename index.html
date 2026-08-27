@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - Smart Photo Editor</title>
+    <title>Pixora AI - Smart AI Photo Studio</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: #0b0f19; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; }
         
         /* Navbar */
         header { background: #111827; border-bottom: 1px solid #1f2937; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 20px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-        .badge { background: #0284c7; color: white; font-size: 11px; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 600; }
+        .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 8px; }
+        .badge { background: #0284c7; color: white; font-size: 11px; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; font-weight: 600; -webkit-text-fill-color: white; }
 
         /* Main Workspace */
         .workspace { display: flex; flex: 1; height: calc(100vh - 65px); }
@@ -22,7 +22,7 @@
         .tool-section h3 { font-size: 14px; margin-bottom: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* Upload Area */
-        .upload-card { border: 2px dashed #475569; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: #0f172a; }
+        .upload-card { border: 2px dashed #475569; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: #0f172a; display: block; }
         .upload-card:hover { border-color: #38bdf8; }
         input[type="file"] { display: none; }
 
@@ -33,7 +33,7 @@
 
         /* Buttons */
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
-        .btn-ai { background: linear-gradient(135deg, #0284c7, #2563eb); color: white; margin-bottom: 10px; }
+        .btn-ai { background: linear-gradient(135deg, #0284c7, #6366f1); color: white; margin-bottom: 10px; }
         .btn-ai:hover { opacity: 0.9; }
         .btn-reset { background: #334155; color: #cbd5e1; }
         .btn-download { background: #10b981; color: white; margin-top: auto; }
@@ -48,7 +48,7 @@
         .checkerboard { background: repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 50% / 20px 20px; }
 
         /* Status Loader */
-        .loader { position: absolute; top: 20px; background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; color: #38bdf8; padding: 10px 20px; border-radius: 30px; font-size: 14px; display: none; }
+        .loader { position: absolute; top: 20px; background: rgba(15, 23, 42, 0.95); border: 1px solid #38bdf8; color: #38bdf8; padding: 12px 24px; border-radius: 30px; font-size: 14px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         
         @media (max-width: 768px) {
             .workspace { flex-direction: column-reverse; height: auto; }
@@ -60,25 +60,29 @@
 <body>
 
     <header>
-        <div class="logo">⚡ AI Studio <span class="badge">PRO</span></div>
-        <div style="font-size: 13px; color: #94a3b8;">100% Free & In-Browser</div>
+        <div class="logo">⚡ Pixora AI <span class="badge">PRO</span></div>
+        <div style="font-size: 13px; color: #94a3b8;">100% Free AI Editor</div>
     </header>
 
     <div class="workspace">
+        <!-- Sidebar Tools Panel -->
         <div class="sidebar">
             
+            <!-- Upload Box -->
             <label class="upload-card" for="imageInput">
-                <span id="uploadLabel">📁 Photo Upload Karein</span>
+                <span id="uploadLabel">📁 Upload Image</span>
                 <input type="file" id="imageInput" accept="image/*">
             </label>
 
+            <!-- AI Tools -->
             <div class="tool-section">
-                <h3>AI Actions</h3>
+                <h3>Pixora AI Tools</h3>
                 <button class="btn btn-ai" id="bgRemoveBtn">✨ AI Remove Background</button>
             </div>
 
+            <!-- Image Adjustments -->
             <div class="tool-section">
-                <h3>Filters & Adjust</h3>
+                <h3>Filters & Adjustments</h3>
                 
                 <div class="slider-group">
                     <label><span>Brightness</span><span id="valBrightness">100%</span></label>
@@ -103,17 +107,20 @@
                 <button class="btn btn-reset" id="resetFilters">Reset Filters</button>
             </div>
 
-            <button class="btn btn-download" id="downloadBtn">📥 Download Result (PNG)</button>
+            <!-- Download Button -->
+            <button class="btn btn-download" id="downloadBtn">📥 Download (PNG)</button>
         </div>
 
+        <!-- Canvas Area -->
         <div class="stage">
-            <div class="loader" id="loader">⏳ AI background remove kar raha hai... Please wait...</div>
+            <div class="loader" id="loader">⏳ Pixora AI is processing background... Please wait...</div>
             <div class="canvas-container checkerboard">
                 <canvas id="mainCanvas"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- AI Module Script -->
     <script type="module">
         import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm';
 
@@ -212,7 +219,7 @@
                 newImg.src = transparentUrl;
             } catch (err) {
                 console.error(err);
-                alert("Error: AI process complete nahi ho paya.");
+                alert("Error: Pixora AI processing complete nahi ho payi.");
                 loader.style.display = "none";
             }
         });
@@ -220,14 +227,15 @@
         // High Quality PNG Download
         downloadBtn.addEventListener('click', () => {
             if (!isImageLoaded) {
-                alert("Pehle photo edit karein!");
+                alert("Pehle photo upload ya edit karein!");
                 return;
             }
             const link = document.createElement('a');
-            link.download = 'edited-photo.png';
+            link.download = 'pixora-ai-edit.png';
             link.href = canvas.toDataURL('image/png');
             link.click();
         });
     </script>
 </body>
 </html>
+
