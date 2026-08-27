@@ -1,766 +1,508 @@
-import React, { useRef, useState } from "react";
-import removeBackground from "@imgly/background-removal";
-import {
-  Upload,
-  Download,
-  RotateCw,
-  FlipHorizontal,
-  RefreshCcw,
-  ZoomIn,
-  ZoomOut,
-  Sun,
-  Contrast,
-  Palette,
-  Image as ImageIcon,
-  Eraser,
-  Sparkles,
-  Wand2,
-  Loader2,
-  X,
-  Check,
-  Languages,
-} from "lucide-react";
+import React, { useMemo, useRef, useState } from "react";
+import "./style.css";
+
+const FILTERS = [
+  { id: "normal", name: "Normal", css: "" },
+  { id: "vivid", name: "Vivid", css: "saturate(1.8) contrast(1.2)" },
+  { id: "warm", name: "Warm", css: "sepia(.35) saturate(1.3)" },
+  { id: "bw", name: "B&W", css: "grayscale(1)" },
+  { id: "cinematic", name: "Cinematic", css: "contrast(1.3) saturate(.8)" },
+  { id: "soft", name: "Soft", css: "brightness(1.1) blur(1px)" },
+];
+
+const TOOLS = [
+  ["Adjust", "⚙️"],
+  ["Filters", "🎨"],
+  ["Transform", "↔️"],
+  ["AI Edit", "✨"],
+];
 
 export default function App() {
+  const inputRef = useRef(null);
+
   const [image, setImage] = useState(null);
-  const [fileName, setFileName] = useState("pixora-image");
+  const [fileName, setFileName] = useState("No image selected");
+
+  const [activeTool, setActiveTool] = useState("Adjust");
+  const [filter, setFilter] = useState("normal");
 
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
-  const [grayscale, setGrayscale] = useState(0);
+  const [blur, setBlur] = useState(0);
+
   const [rotation, setRotation] = useState(0);
-  const [flip, setFlip] = useState(false);
+  const [flipX, setFlipX] = useState(false);
+  const [flipY, setFlipY] = useState(false);
   const [zoom, setZoom] = useState(100);
 
-  const [removingBackground, setRemovingBackground] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [language, setLanguage] = useState("en");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiMessage, setAiMessage] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
 
-  const fileInput = useRef(null);
-  const canvasRef = useRef(null);
+  const [showCrop, setShowCrop] = useState(false);
+  const [cropRatio, setCropRatio] = useState("1:1");
 
-  const t = {
-    en: {
-      home: "Home",
-      tools: "AI Tools",
-      editor: "Editor",
-      pricing: "Pricing",
-      login: "Login",
-      signup: "Sign Up",
-      title: "AI Image Editing",
-      made: "Made Simple",
-      subtitle:
-        "Edit, enhance and transform your images with powerful AI-powered tools.",
-      upload: "Upload Your Image",
-      uploaded: "Image Uploaded ✓",
-      choose: "Choose Image",
-      formats: "JPG • PNG • WEBP",
-      editorTitle: "Image Editor",
-      aiTools: "AI Tools",
-      removeBg: "Remove Background",
-      removing: "Removing background...",
-      adjust: "Adjust Image",
-      brightness: "Brightness",
-      contrast: "Contrast",
-      saturation: "Saturation",
-      grayscale: "Grayscale",
-      rotate: "Rotate",
-      flip: "Flip",
-      zoom: "Zoom",
-      reset: "Reset",
-      download: "Download Image",
-      aiEdit: "AI Edit",
-      promptPlaceholder:
-        "Describe what you want to do with this image...",
-      runAI: "Run AI",
-      close: "Close",
-      ready: "Your image is ready!",
-    },
+  const currentFilter =
+    FILTERS.find((f) => f.id === filter)?.css || "";
 
-    hi: {
-      home: "होम",
-      tools: "AI टूल्स",
-      editor: "एडिटर",
-      pricing: "प्राइसिंग",
-      login: "लॉगिन",
-      signup: "साइन अप",
-      title: "AI Image Editing",
-      made: "आसान बनाया गया",
-      subtitle:
-        "शक्तिशाली AI टूल्स की मदद से अपनी इमेज को एडिट, एन्हांस और ट्रांसफॉर्म करें।",
-      upload: "अपनी इमेज अपलोड करें",
-      uploaded: "इमेज अपलोड हो गई ✓",
-      choose: "इमेज चुनें",
-      formats: "JPG • PNG • WEBP",
-      editorTitle: "इमेज एडिटर",
-      aiTools: "AI टूल्स",
-      removeBg: "Background हटाएं",
-      removing: "Background हट रहा है...",
-      adjust: "इमेज Adjust करें",
-      brightness: "Brightness",
-      contrast: "Contrast",
-      saturation: "Saturation",
-      grayscale: "Grayscale",
-      rotate: "Rotate",
-      flip: "Flip",
-      zoom: "Zoom",
-      reset: "Reset",
-      download: "इमेज Download करें",
-      aiEdit: "AI Edit",
-      promptPlaceholder:
-        "इमेज में क्या बदलाव करना है, यहां लिखें...",
-      runAI: "AI चलाएं",
-      close: "बंद करें",
-      ready: "आपकी इमेज तैयार है!",
-    },
-  }[language];
+  const previewStyle = useMemo(
+    () => ({
+      filter: [
+        `brightness(${brightness}%)`,
+        `contrast(${contrast}%)`,
+        `saturate(${saturation}%)`,
+        `blur(${blur}px)`,
+        currentFilter,
+      ]
+        .filter(Boolean)
+        .join(" "),
 
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
+      transform: `
+        rotate(${rotation}deg)
+        scale(${flipX ? -1 : 1}, ${flipY ? -1 : 1})
+        scale(${zoom / 100})
+      `,
+    }),
+    [
+      brightness,
+      contrast,
+      saturation,
+      blur,
+      currentFilter,
+      rotation,
+      flipX,
+      flipY,
+      zoom,
+    ]
+  );
+
+  /* =========================
+     FILE UPLOAD
+  ========================= */
+
+  function openFile() {
+    inputRef.current?.click();
+  }
+
+  function handleFile(event) {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert(
-        language === "hi"
-          ? "कृपया केवल image file चुनें।"
-          : "Please select an image file."
-      );
+      alert("Please select an image file.");
       return;
     }
 
     const url = URL.createObjectURL(file);
 
     setImage(url);
-    setFileName(file.name.split(".")[0] || "pixora-image");
+    setFileName(file.name);
 
-    resetEditing();
-  };
+    resetAll();
+    setActiveTool("Adjust");
+  }
 
-  const resetEditing = () => {
+  /* =========================
+     RESET
+  ========================= */
+
+  function resetAll() {
+    setFilter("normal");
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
-    setGrayscale(0);
+    setBlur(0);
     setRotation(0);
-    setFlip(false);
+    setFlipX(false);
+    setFlipY(false);
     setZoom(100);
-  };
+  }
 
-  const rotateImage = () => {
-    setRotation((prev) => prev + 90);
-  };
+  /* =========================
+     TRANSFORM
+  ========================= */
 
-  const flipImage = () => {
-    setFlip((prev) => !prev);
-  };
+  function rotateLeft() {
+    setRotation((value) => value - 90);
+  }
 
-  const zoomIn = () => {
-    setZoom((prev) => Math.min(prev + 10, 200));
-  };
+  function rotateRight() {
+    setRotation((value) => value + 90);
+  }
 
-  const zoomOut = () => {
-    setZoom((prev) => Math.max(prev - 10, 50));
-  };
+  function flipHorizontal() {
+    setFlipX((value) => !value);
+  }
 
-  const handleRemoveBackground = async () => {
-    if (!image || removingBackground) return;
+  function flipVertical() {
+    setFlipY((value) => !value);
+  }
 
-    try {
-      setRemovingBackground(true);
+  /* =========================
+     AI EDIT
+  ========================= */
 
-      const blob = await removeBackground(image);
-
-      const newUrl = URL.createObjectURL(blob);
-
-      setImage(newUrl);
-      setAiMessage(
-        language === "hi"
-          ? "Background सफलतापूर्वक हटा दिया गया।"
-          : "Background removed successfully."
-      );
-    } catch (error) {
-      console.error("Background removal failed:", error);
-
-      alert(
-        language === "hi"
-          ? "Background remove नहीं हो पाया। कृपया दोबारा कोशिश करें।"
-          : "Background removal failed. Please try again."
-      );
-    } finally {
-      setRemovingBackground(false);
-    }
-  };
-
-  const getImageFilter = () => {
-    return `
-      brightness(${brightness}%)
-      contrast(${contrast}%)
-      saturate(${saturation}%)
-      grayscale(${grayscale}%)
-    `;
-  };
-
-  const getImageTransform = () => {
-    return `
-      rotate(${rotation}deg)
-      scaleX(${flip ? -1 : 1})
-      scale(${zoom / 100})
-    `;
-  };
-
-  const downloadImage = () => {
+  function runAI() {
     if (!image) {
-      alert(
-        language === "hi"
-          ? "पहले इमेज upload करें।"
-          : "Please upload an image first."
+      setAiResponse("पहले image upload करें।");
+      return;
+    }
+
+    if (!aiPrompt.trim()) {
+      setAiResponse(
+        "AI Edit में बताइए कि image में क्या बदलना है।"
       );
+      return;
+    }
+
+    setAiResponse(
+      `AI Prompt तैयार है:
+
+"${aiPrompt.trim()}"
+
+Real AI editing के लिए इस button को AI API/backend से connect करना होगा।`
+    );
+  }
+
+  /* =========================
+     DOWNLOAD
+  ========================= */
+
+  function downloadImage() {
+    if (!image) {
+      alert("पहले image upload करें।");
       return;
     }
 
     const img = new Image();
 
     img.onload = () => {
-      const canvas = canvasRef.current;
+      const normalizedRotation =
+        ((rotation % 360) + 360) % 360;
 
-      if (!canvas) return;
+      const swap =
+        normalizedRotation === 90 ||
+        normalizedRotation === 270;
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = swap
+        ? img.naturalHeight
+        : img.naturalWidth;
+
+      canvas.height = swap
+        ? img.naturalWidth
+        : img.naturalHeight;
 
       const ctx = canvas.getContext("2d");
 
-      const angle = ((rotation % 360) + 360) % 360;
-
-      if (angle === 90 || angle === 270) {
-        canvas.width = img.height * (zoom / 100);
-        canvas.height = img.width * (zoom / 100);
-      } else {
-        canvas.width = img.width * (zoom / 100);
-        canvas.height = img.height * (zoom / 100);
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!ctx) return;
 
       ctx.save();
 
-      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(
+        canvas.width / 2,
+        canvas.height / 2
+      );
 
-      ctx.rotate((angle * Math.PI) / 180);
+      ctx.rotate(
+        (rotation * Math.PI) / 180
+      );
 
-      if (flip) {
-        ctx.scale(-1, 1);
-      }
+      ctx.scale(
+        flipX ? -1 : 1,
+        flipY ? -1 : 1
+      );
 
-      ctx.filter = `
-        brightness(${brightness}%)
-        contrast(${contrast}%)
-        saturate(${saturation}%)
-        grayscale(${grayscale}%)
-      `;
+      const scaleX = swap
+        ? canvas.height / img.naturalWidth
+        : 1;
 
-      const scale = zoom / 100;
+      const scaleY = swap
+        ? canvas.width / img.naturalHeight
+        : 1;
+
+      ctx.scale(scaleX, scaleY);
+
+      ctx.filter = [
+        `brightness(${brightness}%)`,
+        `contrast(${contrast}%)`,
+        `saturate(${saturation}%)`,
+        `blur(${blur}px)`,
+        currentFilter,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
       ctx.drawImage(
         img,
-        (-img.width * scale) / 2,
-        (-img.height * scale) / 2,
-        img.width * scale,
-        img.height * scale
+        -img.naturalWidth / 2,
+        -img.naturalHeight / 2
       );
 
       ctx.restore();
 
       const link = document.createElement("a");
 
-      link.download = `${fileName}-pixora.png`;
+      const cleanName =
+        fileName.replace(/\.[^/.]+$/, "") ||
+        "edited";
 
-      link.href = canvas.toDataURL("image/png");
+      link.download =
+        `pixora-${cleanName}.png`;
+
+      link.href =
+        canvas.toDataURL("image/png", 1);
 
       link.click();
-
-      setAiMessage(t.ready);
-    };
-
-    img.onerror = () => {
-      alert(
-        language === "hi"
-          ? "इमेज download करने में समस्या हुई।"
-          : "There was a problem downloading the image."
-      );
     };
 
     img.src = image;
-  };
+  }
 
-  const runAI = async () => {
-    if (!image) {
-      alert(
-        language === "hi"
-          ? "पहले image upload करें।"
-          : "Please upload an image first."
-      );
-      return;
-    }
+  /* =========================
+     SETTINGS PANEL
+  ========================= */
 
-    if (!aiPrompt.trim()) {
-      alert(
-        language === "hi"
-          ? "AI को बताएं कि image में क्या बदलाव करना है।"
-          : "Tell AI what you want to change in the image."
-      );
-      return;
-    }
+  function renderPanel() {
+    /* FILTERS */
 
-    try {
-      setAiLoading(true);
-      setAiMessage("");
+    if (activeTool === "Filters") {
+      return (
+        <div className="panel-content">
 
-      const response = await fetch("/api/gemini", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: `
-You are Pixora AI, an advanced AI image editing assistant.
+          <div className="panel-heading">
+            <span>🎨</span>
+            <h2>Filters</h2>
+          </div>
 
-The user wants to edit an uploaded image.
+          <div className="filter-grid">
 
-User request:
-${aiPrompt}
+            {FILTERS.map((item) => (
+              <button
+                key={item.id}
+                className={
+                  `filter-button ${
+                    filter === item.id
+                      ? "selected"
+                      : ""
+                  }`
+                }
+                onClick={() =>
+                  setFilter(item.id)
+                }
+              >
 
-Explain the exact image editing operation that should be performed.
+                <div
+                  className={
+                    `filter-preview ${item.id}`
+                  }
+                />
 
-Return a short, clear instruction for the image editor.
-          `,
-        }),
-      });
+                <span>{item.name}</span>
 
-      const data = await response.json();
+              </button>
+            ))}
 
-      if (!response.ok) {
-        throw new Error(data?.error || "AI API error");
-      }
+          </div>
 
-      setAiMessage(
-        data?.text ||
-          (language === "hi"
-            ? "AI response प्राप्त हुआ।"
-            : "AI response received.")
-      );
-    } catch (error) {
-      console.error(error);
-
-      setAiMessage(
-        language === "hi"
-          ? `AI Error: ${error.message}`
-          : `AI Error: ${error.message}`
-      );
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const clearImage = () => {
-    setImage(null);
-    setAiPrompt("");
-    setAiMessage("");
-    resetEditing();
-
-    if (fileInput.current) {
-      fileInput.current.value = "";
-    }
-  };
-
-  return (
-    <div className="app">
-      {/* HEADER */}
-      <header className="header">
-        <div className="logo">
-          Pixora <span>AI</span>
         </div>
+      );
+    }
 
-        <nav>
-          <a href="#home">{t.home}</a>
-          <a href="#tools">{t.tools}</a>
-          <a href="#editor">{t.editor}</a>
-          <a href="#pricing">{t.pricing}</a>
-        </nav>
+    /* TRANSFORM */
 
-        <div className="headerActions">
+    if (activeTool === "Transform") {
+      return (
+        <div className="panel-content">
+
+          <div className="panel-heading">
+            <span>↔️</span>
+            <h2>Transform</h2>
+          </div>
+
+          <div className="transform-grid">
+
+            <button onClick={rotateLeft}>
+              ↶
+              <span>Rotate Left</span>
+            </button>
+
+            <button onClick={rotateRight}>
+              ↷
+              <span>Rotate Right</span>
+            </button>
+
+            <button onClick={flipHorizontal}>
+              ↔️
+              <span>Flip Horizontal</span>
+            </button>
+
+            <button onClick={flipVertical}>
+              ↕️
+              <span>Flip Vertical</span>
+            </button>
+
+            <button
+              onClick={() =>
+                setShowCrop(true)
+              }
+            >
+              ✂️
+              <span>Crop</span>
+            </button>
+
+            <button onClick={resetAll}>
+              ⟲
+              <span>Reset</span>
+            </button>
+
+          </div>
+
+          <div className="transform-info">
+
+            Rotation:{" "}
+            {((rotation % 360) + 360) % 360}
+            °
+
+            <br />
+
+            Zoom: {zoom}%
+
+          </div>
+
+          <div className="slider-box">
+
+            <div className="slider-header">
+
+              <span>🔍 Zoom</span>
+
+              <strong>{zoom}%</strong>
+
+            </div>
+
+            <input
+              type="range"
+              min="50"
+              max="200"
+              value={zoom}
+              onChange={(e) =>
+                setZoom(
+                  Number(e.target.value)
+                )
+              }
+            />
+
+          </div>
+
+        </div>
+      );
+    }
+
+    /* AI EDIT */
+
+    if (activeTool === "AI Edit") {
+      return (
+        <div className="panel-content">
+
+          <div className="panel-heading">
+
+            <span>✨</span>
+
+            <h2>
+              AI Image Editor
+            </h2>
+
+          </div>
+
           <button
-            className="languageButton"
-            onClick={() =>
-              setLanguage((prev) => (prev === "en" ? "hi" : "en"))
-            }
-            title="Change language"
+            className="ai-main-button"
+            onClick={openFile}
           >
-            <Languages size={18} />
-            {language === "en" ? "हिंदी" : "English"}
+            📷 Upload Image
           </button>
 
-          <button className="login">{t.login}</button>
-
-          <button className="signup">{t.signup}</button>
-        </div>
-      </header>
-
-      {/* HERO */}
-      <main id="home">
-        <section className="hero">
-          <div className="heroContent">
-            <div className="badge">
-              <Sparkles size={16} />
-              AI POWERED
-            </div>
-
-            <h1>
-              {t.title}
-              <br />
-              <span>{t.made}</span>
-            </h1>
-
-            <p>{t.subtitle}</p>
+          <div className="ai-divider">
+            AI EDIT
           </div>
 
-          {/* UPLOAD */}
-          {!image && (
-            <label className="uploadBox">
-              <input
-                ref={fileInput}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleImage}
-                hidden
-              />
+          <label className="input-label">
+            What should AI change?
+          </label>
 
-              <div className="uploadIcon">
-                <Upload size={34} />
-              </div>
+          <textarea
+            rows="5"
+            value={aiPrompt}
+            onChange={(e) =>
+              setAiPrompt(e.target.value)
+            }
+            placeholder={
+              "Example: Remove the background and put the person on a beach..."
+            }
+          />
 
-              <h2>{t.upload}</h2>
+          <button
+            className="ai-generate-button"
+            onClick={runAI}
+            disabled={!image}
+          >
+            ✨ Prepare AI Edit
+          </button>
 
-              <p>{t.formats}</p>
-
-              <button
-                type="button"
-                className="chooseButton"
-                onClick={() => fileInput.current?.click()}
-              >
-                <Upload size={18} />
-                {t.choose}
-              </button>
-            </label>
+          {aiResponse && (
+            <div className="ai-response">
+              {aiResponse}
+            </div>
           )}
-        </section>
 
-        {/* EDITOR */}
-        {image && (
-          <section className="editorSection" id="editor">
-            <div className="sectionTitle">
-              <h2>
-                <Wand2 size={24} />
-                {t.editorTitle}
-              </h2>
+          <div className="ai-note">
 
-              <button className="clearButton" onClick={clearImage}>
-                <X size={18} />
-                {t.close}
-              </button>
-            </div>
+            Real AI background removal,
+            object removal, generative fill,
+            image generation आदि के लिए
+            AI API/backend connect करना होगा।
 
-            <div className="editorLayout">
-              {/* IMAGE PREVIEW */}
-              <div className="previewPanel">
-                <div className="previewHeader">
-                  <span>
-                    <ImageIcon size={18} />
-                    Pixora Preview
-                  </span>
-                </div>
-
-                <div className="previewImage">
-                  <img
-                    src={image}
-                    alt="Pixora preview"
-                    style={{
-                      filter: getImageFilter(),
-                      transform: getImageTransform(),
-                    }}
-                  />
-                </div>
-
-                <div className="previewActions">
-                  <button onClick={downloadImage}>
-                    <Download size={18} />
-                    {t.download}
-                  </button>
-
-                  <button onClick={resetEditing}>
-                    <RefreshCcw size={18} />
-                    {t.reset}
-                  </button>
-                </div>
-              </div>
-
-              {/* CONTROLS */}
-              <div className="controlsPanel">
-                {/* AI TOOLS */}
-                <div className="toolCard">
-                  <h3>
-                    <Sparkles size={20} />
-                    {t.aiTools}
-                  </h3>
-
-                  <button
-                    className="aiToolButton"
-                    onClick={handleRemoveBackground}
-                    disabled={removingBackground}
-                  >
-                    {removingBackground ? (
-                      <>
-                        <Loader2 className="spin" size={18} />
-                        {t.removing}
-                      </>
-                    ) : (
-                      <>
-                        <Eraser size={18} />
-                        {t.removeBg}
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* AI PROMPT */}
-                <div className="toolCard">
-                  <h3>
-                    <Sparkles size={20} />
-                    {t.aiEdit}
-                  </h3>
-
-                  <textarea
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder={t.promptPlaceholder}
-                    rows="4"
-                  />
-
-                  <button
-                    className="aiRunButton"
-                    onClick={runAI}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? (
-                      <>
-                        <Loader2 className="spin" size={18} />
-                        AI...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={18} />
-                        {t.runAI}
-                      </>
-                    )}
-                  </button>
-
-                  {aiMessage && (
-                    <div className="aiMessage">
-                      <Check size={18} />
-                      <span>{aiMessage}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* ADJUST IMAGE */}
-                <div className="toolCard">
-                  <h3>
-                    <Palette size={20} />
-                    {t.adjust}
-                  </h3>
-
-                  {/* BRIGHTNESS */}
-                  <div className="control">
-                    <div className="controlLabel">
-                      <span>
-                        <Sun size={17} />
-                        {t.brightness}
-                      </span>
-
-                      <b>{brightness}%</b>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={brightness}
-                      onChange={(e) =>
-                        setBrightness(Number(e.target.value))
-                      }
-                    />
-                  </div>
-
-                  {/* CONTRAST */}
-                  <div className="control">
-                    <div className="controlLabel">
-                      <span>
-                        <Contrast size={17} />
-                        {t.contrast}
-                      </span>
-
-                      <b>{contrast}%</b>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={contrast}
-                      onChange={(e) =>
-                        setContrast(Number(e.target.value))
-                      }
-                    />
-                  </div>
-
-                  {/* SATURATION */}
-                  <div className="control">
-                    <div className="controlLabel">
-                      <span>
-                        <Palette size={17} />
-                        {t.saturation}
-                      </span>
-
-                      <b>{saturation}%</b>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={saturation}
-                      onChange={(e) =>
-                        setSaturation(Number(e.target.value))
-                      }
-                    />
-                  </div>
-
-                  {/* GRAYSCALE */}
-                  <div className="control">
-                    <div className="controlLabel">
-                      <span>
-                        <Contrast size={17} />
-                        {t.grayscale}
-                      </span>
-
-                      <b>{grayscale}%</b>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={grayscale}
-                      onChange={(e) =>
-                        setGrayscale(Number(e.target.value))
-                      }
-                    />
-                  </div>
-
-                  {/* TRANSFORM BUTTONS */}
-                  <div className="buttonGrid">
-                    <button onClick={rotateImage}>
-                      <RotateCw size={18} />
-                      {t.rotate}
-                    </button>
-
-                    <button onClick={flipImage}>
-                      <FlipHorizontal size={18} />
-                      {t.flip}
-                    </button>
-
-                    <button onClick={zoomOut}>
-                      <ZoomOut size={18} />
-                      -
-                    </button>
-
-                    <button onClick={zoomIn}>
-                      <ZoomIn size={18} />
-                      +
-                    </button>
-                  </div>
-
-                  <div className="zoomInfo">
-                    {t.zoom}: <b>{zoom}%</b>
-                  </div>
-                </div>
-
-                {/* DOWNLOAD */}
-                <button
-                  className="downloadButton"
-                  onClick={downloadImage}
-                >
-                  <Download size={20} />
-                  {t.download}
-                </button>
-              </div>
-            </div>
-
-            <canvas
-              ref={canvasRef}
-              style={{ display: "none" }}
-            />
-          </section>
-        )}
-
-        {/* FEATURES */}
-        <section className="features" id="tools">
-          <div className="featureCard">
-            <Sparkles size={28} />
-            <h3>AI Editing</h3>
-            <p>
-              Powerful AI tools for modern image editing.
-            </p>
           </div>
 
-          <div className="featureCard">
-            <Eraser size={28} />
-            <h3>Background Removal</h3>
-            <p>
-              Remove image backgrounds directly in your browser.
-            </p>
-          </div>
+        </div>
+      );
+    }
 
-          <div className="featureCard">
-            <ImageIcon size={28} />
-            <h3>Image Enhancement</h3>
-            <p>
-              Adjust brightness, contrast, saturation and more.
-            </p>
-          </div>
+    /* ADJUST */
 
-          <div className="featureCard">
-            <Download size={28} />
-            <h3>High Quality Export</h3>
-            <p>
-              Download your edited image as PNG.
-            </p>
-          </div>
-        </section>
+    return (
+      <div className="panel-content">
 
-        {/* PRICING */}
-        <section className="pricing" id="pricing">
-          <h2>Pixora AI</h2>
+        <div className="panel-heading">
 
-          <p>
-            Powerful image editing tools in one simple editor.
-          </p>
-        </section>
-      </main>
+          <span>⚙️</span>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div>
-          <strong>Pixora AI</st
+          <h2>Adjust</h2>
+
+        </div>
+
+        <Slider
+          label="☀️ Brightness"
+          value={brightness}
+          min={0}
+          max={200}
+          unit="%"
+          onChange={setBrightness}
+        />
+
+        <Slider
+          label="◐ Contrast"
+          value={contrast}
+          min={0}
+          max={200}
+          unit="%"
+          onChange={setContrast}
+        />
+
+        <Slider
+          label="🌈 Saturation"
+          value={saturation}
+          min={0}
+          max={200}
+          unit
